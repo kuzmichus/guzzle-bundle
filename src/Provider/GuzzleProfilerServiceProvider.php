@@ -2,8 +2,9 @@
 
 namespace Campru\GuzzleBundle\Provider;
 
-use Silex\Application;
-use Silex\ServiceProviderInterface;
+use Pimple\Container;
+use Pimple\ServiceProviderInterface;
+
 
 /**
  * Web Profiler provider for guzzle.
@@ -17,7 +18,7 @@ class GuzzleProfilerServiceProvider implements ServiceProviderInterface
      *
      * @param Application $app Silex application.
      */
-    public function register(Application $app)
+    public function register(Container $app)
     {
         if (!isset($app['data_collector.templates'])) {
             throw new \LogicException(
@@ -31,15 +32,15 @@ class GuzzleProfilerServiceProvider implements ServiceProviderInterface
             return $tpls;
         });
 
-        $app['guzzle_bundle.subscriber.profiler'] = $app->share(function () {
+        $app['guzzle_bundle.subscriber.profiler'] = function () {
             return new \GuzzleHttp\Subscriber\History;
-        });
+        };
 
-        $app['guzzle_bundle.subscriber.storage'] = $app->share(function () {
+        $app['guzzle_bundle.subscriber.storage'] = function () {
             return new \Campru\GuzzleBundle\Subscriber\Stopwatch(new \SplObjectStorage);
-        });
+        };
 
-        $app['data_collectors'] = $app->share($app->extend('data_collectors', function ($collectors, $app) {
+        $app['data_collectors'] = $app->extend('data_collectors', function ($collectors, $app) {
             $collectors['guzzle'] = function ($app) {
                 return new \Campru\GuzzleBundle\DataCollector\GuzzleDataCollector(
                     $app['guzzle_bundle.subscriber.profiler'],
@@ -48,7 +49,7 @@ class GuzzleProfilerServiceProvider implements ServiceProviderInterface
             };
 
             return $collectors;
-        }));
+        });
 
         $app['guzzle_bundle.profiler.templates_path'] = function () {
             $class = new \ReflectionClass('Campru\GuzzleBundle\DataCollector\GuzzleDataCollector');
@@ -56,19 +57,10 @@ class GuzzleProfilerServiceProvider implements ServiceProviderInterface
             return dirname(dirname($class->getFileName())).'/../resources';
         };
 
-        $app['twig.loader.filesystem'] = $app->share($app->extend('twig.loader.filesystem', function ($loader, $app) {
+        $app['twig.loader.filesystem'] = $app->extend('twig.loader.filesystem', function ($loader, $app) {
             $loader->addPath($app['guzzle_bundle.profiler.templates_path'], 'CampruGuzzle');
 
             return $loader;
-        }));
-    }
-
-    /**
-     * Bootstraps the application.
-     *
-     * @param Application $app Silex application.
-     */
-    public function boot(Application $app)
-    {
+        });
     }
 }

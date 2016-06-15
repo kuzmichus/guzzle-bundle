@@ -17,9 +17,9 @@
         }
     },
     "require": {
-        "php": ">=5.4.0",
-        "silex/silex": "~1.2",
-        "silex/web-profiler": "~1.0",
+        "php": ">=5.5.9",
+        "silex/silex": "~2.0",
+        "silex/web-profiler": "~2.0",
         "guzzlehttp/guzzle": "~5.0"
     },
     "require-dev": {
